@@ -2,7 +2,7 @@ import socket
 import httpx
 import asyncio
 
-async def advanced_debug():
+async def run_advanced_debug():
     host = "graph.facebook.com"
     results = {}
     
