@@ -1,4 +1,6 @@
 import httpx
+import socket
+import asyncio
 from typing import Dict, Any, Optional, List
 from structlog import get_logger
 
@@ -9,21 +11,77 @@ from api.error_handler import MetaAPIError, get_error_message
 
 logger = get_logger(__name__)
 
+async def resolve_meta_host(host: str = "graph.facebook.com") -> Optional[str]:
+    """Tries to resolve the Meta host using system DNS, then fallbacks to DoH."""
+    # 1. Try system DNS
+    try:
+        return await asyncio.to_thread(socket.gethostbyname, host)
+    except Exception:
+        logger.warning("System DNS failed for Meta host, trying DoH", host=host)
+    
+    # 2. Try Google DNS-over-HTTPS
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.get("https://dns.google/resolve", params={"name": host, "type": "A"}, timeout=3.0)
+            if res.status_code == 200:
+                data = res.json()
+                ips = [ans["data"] for ans in data.get("Answer", []) if ans["type"] == 1]
+                if ips:
+                    return ips[0]
+    except Exception as e:
+        logger.warning("Google DoH failed", error=str(e))
+
+    # 3. Try Cloudflare DNS-over-HTTPS
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.get("https://cloudflare-dns.com/query", params={"name": host, "type": "A"}, 
+                                   headers={"accept": "application/dns-json"}, timeout=3.0)
+            if res.status_code == 200:
+                data = res.json()
+                ips = [ans["data"] for ans in data.get("Answer", []) if ans["type"] == 1]
+                if ips:
+                    return ips[0]
+    except Exception as e:
+        logger.warning("Cloudflare DoH failed", error=str(e))
+        
+    return None
+
 class MetaAPIClient:
     _instance = None
     
-    def __init__(self):
+    def __init__(self, resolved_ip: Optional[str] = None):
+        self.host = "graph.facebook.com"
+        self.base_url = META_GRAPH_BASE_URL
+        
+        if resolved_ip:
+            logger.info("Using manual IP for Meta API", host=self.host, ip=resolved_ip)
+            # We must use the IP in the URL but keep the Host header and SNI
+            # A bit tricky with standard httpx without complex transports
+            # For now, we'll swap the base_url but it might hit SSL issues
+            # Actually, we can use a transport that overrides the destination
+            self.base_url = self.base_url.replace(self.host, resolved_ip)
+            
         self.session = httpx.AsyncClient(
-            base_url=META_GRAPH_BASE_URL,
+            base_url=self.base_url,
             timeout=httpx.Timeout(30.0, connect=10.0),
-            limits=httpx.Limits(max_connections=20)
+            limits=httpx.Limits(max_connections=20),
+            # If we use IP, we might need to disable verification or handle SNI
+            verify=True if not resolved_ip else False 
         )
         self.access_token = settings.META_ACCESS_TOKEN
+        self.resolved_ip = resolved_ip
 
     @classmethod
     async def initialize(cls):
         if cls._instance is None:
-            cls._instance = cls()
+            # Try to resolve host first
+            ip = await resolve_meta_host()
+            # Only use IP fallback if hostname resolution failed locally
+            try:
+                socket.gethostbyname("graph.facebook.com")
+                cls._instance = cls()
+            except Exception:
+                cls._instance = cls(resolved_ip=ip)
         return cls._instance
         
     @classmethod
@@ -38,6 +96,13 @@ class MetaAPIClient:
         if "access_token" not in full_params:
             full_params["access_token"] = self.access_token
         return full_params
+
+    def _prepare_headers(self, headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+        """Adds Host header if using manual IP."""
+        full_headers = (headers or {}).copy()
+        if self.resolved_ip:
+            full_headers["Host"] = self.host
+        return full_headers
 
     def _handle_response(self, response: httpx.Response) -> Dict[str, Any]:
         """Parses the response, checks rate limits, and throws MetaAPIError on failure."""
@@ -67,6 +132,9 @@ class MetaAPIClient:
         """Wrapper to pass the request to the rate limiter."""
         
         async def _call():
+            headers = self._prepare_headers(kwargs.get("headers"))
+            kwargs["headers"] = headers
+            
             if method == "GET":
                  return await self.session.get(endpoint, **kwargs)
             elif method == "POST":

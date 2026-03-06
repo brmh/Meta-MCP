@@ -1,4 +1,4 @@
-# Meta Ads MCP Server v1.0.1
+# Meta Ads MCP Server v1.0.2
 from server import mcp
 
 if __name__ == "__main__":
