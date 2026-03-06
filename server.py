@@ -30,10 +30,15 @@ modules = [
     tools.pages, tools.billing, tools.debug, tools.advanced_debug
 ]
 
+# Register tools
 for mod in modules:
     for name, func in inspect.getmembers(mod, inspect.iscoroutinefunction):
         if not name.startswith("_"):
             mcp.tool()(func)
+
+# Explicitly register debug tools to be double-sure
+mcp.tool()(tools.debug.debug_network)
+mcp.tool()(tools.advanced_debug.run_advanced_debug)
 
 @mcp.resource("meta://account/{ad_account_id}")
 async def get_account_resource(ad_account_id: str) -> str:

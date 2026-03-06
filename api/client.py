@@ -12,39 +12,31 @@ from api.error_handler import MetaAPIError, get_error_message
 logger = get_logger(__name__)
 
 async def resolve_meta_host(host: str = "graph.facebook.com") -> Optional[str]:
-    """Tries to resolve the Meta host using system DNS, then fallbacks to DoH."""
+    """Tries to resolve the Meta host using system DNS, DoH, and finally hardcoded IPs."""
     # 1. Try system DNS
     try:
         return await asyncio.to_thread(socket.gethostbyname, host)
     except Exception:
         logger.warning("System DNS failed for Meta host, trying DoH", host=host)
     
-    # 2. Try Google DNS-over-HTTPS
-    try:
-        async with httpx.AsyncClient() as client:
-            res = await client.get("https://dns.google/resolve", params={"name": host, "type": "A"}, timeout=3.0)
-            if res.status_code == 200:
-                data = res.json()
-                ips = [ans["data"] for ans in data.get("Answer", []) if ans["type"] == 1]
-                if ips:
-                    return ips[0]
-    except Exception as e:
-        logger.warning("Google DoH failed", error=str(e))
+    # 2. Try Google/Cloudflare DoH
+    for doh_url in ["https://dns.google/resolve", "https://cloudflare-dns.com/query"]:
+        try:
+            async with httpx.AsyncClient() as client:
+                params = {"name": host, "type": "A"}
+                headers = {"accept": "application/dns-json"} if "cloudflare" in doh_url else {}
+                res = await client.get(doh_url, params=params, headers=headers, timeout=2.0)
+                if res.status_code == 200:
+                    data = res.json()
+                    ips = [ans["data"] for ans in data.get("Answer", []) if ans["type"] == 1]
+                    if ips: return ips[0]
+        except Exception:
+            pass
 
-    # 3. Try Cloudflare DNS-over-HTTPS
-    try:
-        async with httpx.AsyncClient() as client:
-            res = await client.get("https://cloudflare-dns.com/query", params={"name": host, "type": "A"}, 
-                                   headers={"accept": "application/dns-json"}, timeout=3.0)
-            if res.status_code == 200:
-                data = res.json()
-                ips = [ans["data"] for ans in data.get("Answer", []) if ans["type"] == 1]
-                if ips:
-                    return ips[0]
-    except Exception as e:
-        logger.warning("Cloudflare DoH failed", error=str(e))
-        
-    return None
+    # 3. Hardcoded Fallback IPs for graph.facebook.com (Last resort)
+    hardcoded_ips = ["157.240.241.14", "31.13.71.36", "157.240.18.14"]
+    logger.warning("DNS and DoH failed. Using hardcoded Meta IP fallback.")
+    return hardcoded_ips[0]
 
 class MetaAPIClient:
     _instance = None
