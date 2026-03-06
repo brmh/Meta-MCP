@@ -65,22 +65,61 @@ async def get_account_insights(
     params = _prepare_insights_params(date_preset, time_range, time_increment, level, fields, breakdowns, action_breakdowns, filtering, sort, limit, after)
     return await client.get(f"/{ad_account_id}/insights", params=params)
 
-async def get_campaign_insights(campaign_id: Annotated[str, Field(description="Campaign ID.")], **kwargs) -> dict:
+async def get_campaign_insights(
+    campaign_id: Annotated[str, Field(description="Campaign ID.")],
+    date_preset: Annotated[Optional[str], Field(description="Date preset (e.g. last_30d).")] = "last_30d",
+    time_range: Annotated[Optional[Dict[str, str]], Field(description="Exact time range {'since': 'YYYY-MM-DD', 'until': 'YYYY-MM-DD'}.")] = None,
+    time_increment: Annotated[Union[int, str], Field(description="1 for daily, 'all_days' or interval.")] = 1,
+    level: Annotated[Literal["account", "campaign", "adset", "ad"], Field(description="Aggregation level.")] = "campaign",
+    fields: Annotated[List[str], Field(description="List of metrics to fetch from VALID_METRICS.")] = [],
+    breakdowns: Annotated[List[str], Field(description="List of breakdowns from VALID_BREAKDOWNS.")] = [],
+    action_breakdowns: Annotated[List[str], Field(description="E.g., ['action_type'].")] = ["action_type"],
+    filtering: Annotated[List[Dict[str, Any]], Field(description="List of filters [{field, operator, value}].")] = [],
+    sort: Annotated[List[str], Field(description="E.g. ['spend_descending'].")] = ["spend_descending"],
+    limit: Annotated[int, Field(description="Results per page.")] = 25,
+    after: Annotated[Optional[str], Field(description="Cursor string.")] = None
+) -> dict:
     """Synchronous insights fetch for a campaign."""
     client = await MetaAPIClient.initialize()
-    params = _prepare_insights_params(**kwargs)
+    params = _prepare_insights_params(date_preset, time_range, time_increment, level, fields, breakdowns, action_breakdowns, filtering, sort, limit, after)
     return await client.get(f"/{campaign_id}/insights", params=params)
 
-async def get_adset_insights(adset_id: Annotated[str, Field(description="Ad Set ID.")], **kwargs) -> dict:
+async def get_adset_insights(
+    adset_id: Annotated[str, Field(description="Ad Set ID.")],
+    date_preset: Annotated[Optional[str], Field(description="Date preset (e.g. last_30d).")] = "last_30d",
+    time_range: Annotated[Optional[Dict[str, str]], Field(description="Exact time range {'since': 'YYYY-MM-DD', 'until': 'YYYY-MM-DD'}.")] = None,
+    time_increment: Annotated[Union[int, str], Field(description="1 for daily, 'all_days' or interval.")] = 1,
+    level: Annotated[Literal["account", "campaign", "adset", "ad"], Field(description="Aggregation level.")] = "adset",
+    fields: Annotated[List[str], Field(description="List of metrics to fetch from VALID_METRICS.")] = [],
+    breakdowns: Annotated[List[str], Field(description="List of breakdowns from VALID_BREAKDOWNS.")] = [],
+    action_breakdowns: Annotated[List[str], Field(description="E.g., ['action_type'].")] = ["action_type"],
+    filtering: Annotated[List[Dict[str, Any]], Field(description="List of filters [{field, operator, value}].")] = [],
+    sort: Annotated[List[str], Field(description="E.g. ['spend_descending'].")] = ["spend_descending"],
+    limit: Annotated[int, Field(description="Results per page.")] = 25,
+    after: Annotated[Optional[str], Field(description="Cursor string.")] = None
+) -> dict:
     """Synchronous insights fetch for an ad set."""
     client = await MetaAPIClient.initialize()
-    params = _prepare_insights_params(**kwargs)
+    params = _prepare_insights_params(date_preset, time_range, time_increment, level, fields, breakdowns, action_breakdowns, filtering, sort, limit, after)
     return await client.get(f"/{adset_id}/insights", params=params)
 
-async def get_ad_insights(ad_id: Annotated[str, Field(description="Ad ID.")], **kwargs) -> dict:
+async def get_ad_insights(
+    ad_id: Annotated[str, Field(description="Ad ID.")],
+    date_preset: Annotated[Optional[str], Field(description="Date preset (e.g. last_30d).")] = "last_30d",
+    time_range: Annotated[Optional[Dict[str, str]], Field(description="Exact time range {'since': 'YYYY-MM-DD', 'until': 'YYYY-MM-DD'}.")] = None,
+    time_increment: Annotated[Union[int, str], Field(description="1 for daily, 'all_days' or interval.")] = 1,
+    level: Annotated[Literal["account", "campaign", "adset", "ad"], Field(description="Aggregation level.")] = "ad",
+    fields: Annotated[List[str], Field(description="List of metrics to fetch from VALID_METRICS.")] = [],
+    breakdowns: Annotated[List[str], Field(description="List of breakdowns from VALID_BREAKDOWNS.")] = [],
+    action_breakdowns: Annotated[List[str], Field(description="E.g., ['action_type'].")] = ["action_type"],
+    filtering: Annotated[List[Dict[str, Any]], Field(description="List of filters [{field, operator, value}].")] = [],
+    sort: Annotated[List[str], Field(description="E.g. ['spend_descending'].")] = ["spend_descending"],
+    limit: Annotated[int, Field(description="Results per page.")] = 25,
+    after: Annotated[Optional[str], Field(description="Cursor string.")] = None
+) -> dict:
     """Synchronous insights fetch for an ad."""
     client = await MetaAPIClient.initialize()
-    params = _prepare_insights_params(**kwargs)
+    params = _prepare_insights_params(date_preset, time_range, time_increment, level, fields, breakdowns, action_breakdowns, filtering, sort, limit, after)
     return await client.get(f"/{ad_id}/insights", params=params)
 
 async def create_async_report(
