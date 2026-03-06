@@ -20,13 +20,14 @@ import tools.catalogs
 import tools.pages
 import tools.billing
 import tools.debug
+import tools.advanced_debug
 import tools.targeting
 
 # Dynamically register all tools 
 modules = [
     tools.campaigns, tools.adsets, tools.ads, tools.creatives,
     tools.audiences, tools.insights, tools.pixels, tools.catalogs,
-    tools.pages, tools.billing, tools.debug
+    tools.pages, tools.billing, tools.debug, tools.advanced_debug
 ]
 
 for mod in modules:
