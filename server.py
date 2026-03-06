@@ -25,7 +25,7 @@ import tools.targeting
 modules = [
     tools.campaigns, tools.adsets, tools.ads, tools.creatives,
     tools.audiences, tools.insights, tools.pixels, tools.catalogs,
-    tools.pages, tools.billing, tools.targeting
+    tools.pages, tools.billing
 ]
 
 for mod in modules:
@@ -39,11 +39,4 @@ async def get_account_resource(ad_account_id: str) -> str:
     result = await client.get(f"/{ad_account_id}", {"fields": "name,currency,timezone_name,account_status"})
     return str(result)
 
-@mcp.on_startup
-async def startup():
-    await MetaAPIClient.initialize()
-    await TokenManager.validate_on_startup()
 
-@mcp.on_shutdown
-async def shutdown():
-    await MetaAPIClient.close()
