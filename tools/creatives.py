@@ -308,7 +308,7 @@ async def get_instant_experience(canvas_id: Annotated[str, Field(description="Ca
     client = await MetaAPIClient.initialize()
     return await client.get(f"/{canvas_id}", params={"fields": "id,name,elements,background_color"})
 
-async def list_instant_experiences(page_id: Annotated[str, Field(description="Facebook Page ID.")], limit: Annotated[int] = 25) -> dict:
+async def list_instant_experiences(page_id: Annotated[str, Field(description="Facebook Page ID.")], limit: Annotated[int, Field(description="Result limit.")] = 25) -> dict:
     """Lists Instant Experiences owned by a page."""
     client = await MetaAPIClient.initialize()
     return await client.get(f"/{page_id}/canvases", params={"limit": limit, "fields": "id,name"})

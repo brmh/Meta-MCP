@@ -221,7 +221,7 @@ async def create_saved_audience(
     payload = {"name": name, "description": description, "targeting": targeting}
     return await client.post(f"/{ad_account_id}/saved_audiences", data=payload)
 
-async def list_saved_audiences(ad_account_id: Annotated[str, Field(description="Ad Account ID.")], limit: Annotated[int] = 25) -> dict:
+async def list_saved_audiences(ad_account_id: Annotated[str, Field(description="Ad Account ID.")], limit: Annotated[int, Field(description="Result limit.")] = 25) -> dict:
     """Lists saved audiences."""
     client = await MetaAPIClient.initialize()
     return await client.get(f"/{ad_account_id}/saved_audiences", params={"limit": limit, "fields": "id,name"})

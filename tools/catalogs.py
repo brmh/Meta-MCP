@@ -61,7 +61,7 @@ async def trigger_product_feed_upload(feed_id: Annotated[str, Field(description=
     client = await MetaAPIClient.initialize()
     return await client.post(f"/{feed_id}/uploads")
 
-async def get_feed_upload_history(feed_id: Annotated[str, Field(description="Feed ID.")], limit: Annotated[int] = 10) -> dict:
+async def get_feed_upload_history(feed_id: Annotated[str, Field(description="Feed ID.")], limit: Annotated[int, Field(description="Result limit.")] = 10) -> dict:
     """Gets feed upload history."""
     client = await MetaAPIClient.initialize()
     return await client.get(f"/{feed_id}/uploads", params={"limit": limit})
@@ -69,7 +69,7 @@ async def get_feed_upload_history(feed_id: Annotated[str, Field(description="Fee
 async def list_products(
     catalog_id: Annotated[str, Field(description="Catalog ID.")], 
     filter: Annotated[Optional[str], Field(description="JSON filter string.")] = None, 
-    limit: Annotated[int] = 50
+    limit: Annotated[int, Field(description="Result limit.")] = 50
 ) -> dict:
     """Lists individual products in a catalog."""
     client = await MetaAPIClient.initialize()
