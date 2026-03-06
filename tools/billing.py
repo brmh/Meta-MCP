@@ -34,7 +34,7 @@ async def get_funding_source(ad_account_id: Annotated[str, Field(description="Ad
 async def get_billing_transactions(
     ad_account_id: Annotated[str, Field(description="Ad Account ID.")], 
     limit: Annotated[int, Field(description="Result limit.")] = 25, 
-    after: Annotated[Optional[str]] = None
+    after: Annotated[Optional[str], Field(description="Cursor string.")] = None
 ) -> dict:
     """Lists billing transactions/charges."""
     client = await MetaAPIClient.initialize()
