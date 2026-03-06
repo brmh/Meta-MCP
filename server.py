@@ -6,13 +6,7 @@ import inspect
 
 mcp = FastMCP(
     name="meta-ads-mcp",
-    version="1.0.0",
-    description="""
-    Full-featured Meta Ads MCP Server. Manage campaigns, ad sets, ads,
-    audiences, creatives, pixels, product catalogs, and analytics
-    using natural language through the Meta Marketing API v21.0.
-    Supports 80+ tools covering the complete Meta advertising lifecycle.
-    """
+    version="1.0.0"
 )
 
 import tools.campaigns
